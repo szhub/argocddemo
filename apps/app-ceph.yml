@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  busy-ceph
+  namespace: default
+  labels:
+    app:  busy-ceph
+spec:
+  selector:
+    matchLabels:
+      app: busy-ceph
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  busy-ceph
+    spec:
+      containers:
+      - name:  busy-ceph
+        image:  busybox:latest
+        resources:
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        args: ["sleep", "infinity"]
+        volumeMounts:
+        - name: localtime
+          mountPath: /etc/localtime
+        - name: ceph-storage
+          mountPath: /storage
+      volumes:
+        - name: localtime
+          hostPath:
+            path: /usr/share/zoneinfo/Asia/Shanghai
+        - name: ceph-storage
+          persistentVolumeClaim:
+            claimName: csi-cephfs-pvc
+      restartPolicy: Always
